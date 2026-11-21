@@ -1,0 +1,73 @@
+name: Deploy portfolio to GitHub Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build site with deployed contact endpoint
+        env:
+          CONTACT_API_URL: ${{ secrets.CONTACT_API_URL }}
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+          from pathlib import Path
+          from urllib.parse import urlparse
+
+          endpoint = os.environ.get("CONTACT_API_URL", "").strip()
+          parsed = urlparse(endpoint)
+          if (
+              parsed.scheme != "https"
+              or not parsed.netloc
+              or not parsed.path.endswith("/contact")
+              or parsed.query
+              or parsed.fragment
+              or "'" in endpoint
+          ):
+              sys.exit("Set the CONTACT_API_URL secret to the HTTPS contact endpoint ending in /contact.")
+
+          source = Path("frontend/Index.html").read_text(encoding="utf-8")
+          local_endpoint = "var CONTACT_ENDPOINT = 'http://127.0.0.1:5017/contact';"
+          if source.count(local_endpoint) != 1:
+              sys.exit("Could not find the expected local contact endpoint in frontend/Index.html.")
+
+          site = Path("_site")
+          site.mkdir()
+          (site / "index.html").write_text(
+              source.replace(
+                  local_endpoint,
+                  "var CONTACT_ENDPOINT = '" + endpoint + "';",
+              ),
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

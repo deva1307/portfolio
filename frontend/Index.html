@@ -998,6 +998,9 @@
 
         <div class="mail-footer">
           <button type="submit" class="form-submit" id="send-btn">Send ➤</button>
+          <p class="form-status err" id="contact-static-notice" role="status" aria-live="polite" hidden>
+            Contact form is unavailable on this static GitHub Pages site.
+          </p>
           <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
         </div>
       </form>
@@ -1063,13 +1066,21 @@
                    (navigator.maxTouchPoints > 1 && window.matchMedia('(max-width: 900px)').matches);
 
     // ---- contact page: visitor writes a message, it is sent to my inbox ----
-    // Local development only; use the deployed HTTPS backend URL in production.
+    // The GitHub Pages build disables the form because it cannot run a backend.
     var CONTACT_ENDPOINT = 'http://127.0.0.1:5017/contact';
+    var CONTACT_FORM_UNAVAILABLE = false;
     var contactPage = document.getElementById('contact-page');
     var contactForm = document.getElementById('contact-form');
     var statusEl = document.getElementById('form-status');
     var sendBtn = document.getElementById('send-btn');
     var lastFocus = null;
+
+    if (CONTACT_FORM_UNAVAILABLE) {
+      document.getElementById('contact-static-notice').hidden = false;
+      contactForm.querySelectorAll('input, textarea, button[type="submit"]').forEach(function(el) {
+        el.disabled = true;
+      });
+    }
 
     function openContact() {
       lastFocus = document.activeElement;
@@ -1114,6 +1125,7 @@
 
     contactForm.addEventListener('submit', function(e) {
       e.preventDefault();
+      if (CONTACT_FORM_UNAVAILABLE) return;
       var name = document.getElementById('f-name').value.trim();
       var email = document.getElementById('f-email').value.trim();
       var subject = document.getElementById('f-subject').value.trim();

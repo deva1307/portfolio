@@ -25,39 +25,17 @@ python main.py
 Backend default URL: `http://127.0.0.1:5000`
 Auth user data is stored locally in SQLite: `auth_users.db`.
 
-## Portfolio deployment
+## GitHub Pages deployment
 
-The portfolio is in `frontend/Index.html`. Its contact form only needs the
-standalone service in `contact-api/`; the chatbot backend and MySQL database are
-not used by this page.
+The portfolio source is `frontend/Index.html`. In the repository, set
+**Settings > Pages > Build and deployment > Source** to **GitHub Actions**.
+The **Deploy portfolio to GitHub Pages** workflow publishes the site on pushes
+to `main` and can also be started manually from the Actions tab.
 
-1. Deploy `contact-api/` as a Railway service with that folder as its root.
-   Install with `pip install -r requirements.txt` and start with
-   `gunicorn app:app --bind 0.0.0.0:$PORT`.
-2. Set these variables in the Railway service. Enter real values in Railway's
-   private variable settings, never in this repository:
-
-   ```text
-   PORTFOLIO_ORIGIN=https://deva1307.github.io
-   SMTP_HOST=smtp.gmail.com
-   SMTP_PORT=587
-   SMTP_SECURITY=starttls
-   SMTP_USERNAME=your-sending-account@gmail.com
-   SMTP_PASSWORD=your-provider-app-password
-   SMTP_FROM_EMAIL=your-sending-account@gmail.com
-   CONTACT_TO_EMAIL=your-inbox@example.com
-   ```
-
-3. Generate a public HTTPS domain for the Railway service and add a GitHub
-   repository Actions secret named `CONTACT_API_URL`, set to the full contact
-   endpoint URL ending in `/contact`.
-4. In the GitHub repository, set **Settings > Pages > Build and deployment >
-   Source** to **GitHub Actions**. Run the **Deploy portfolio to GitHub Pages**
-   workflow from the Actions tab. It builds the published page with the secret
-   endpoint; it does not put SMTP credentials into the site.
-
-The contact API exposes `/health` for a basic availability check. Email
-delivery still depends on valid SMTP settings and provider filtering.
+GitHub Pages is static hosting and cannot run the Flask email service. The
+published build therefore disables the contact form and displays a notice;
+the email link remains available in the portfolio. The standalone service in
+`contact-api/` is source code only and is not deployed by this workflow.
 
 ## Contact Form Email
 
